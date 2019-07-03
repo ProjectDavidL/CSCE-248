@@ -1,0 +1,96 @@
+########################################################
+#	Jesse Schexnayder, Henri Thomas, David Lee
+#	jschexnayder@ua.alaska.edu, hthomas11@alaska.edu, kirby9990@hotmail.com
+#	PA-2
+#	17 Oct, 2016
+#	
+#	PURPOSE:   This program will read itself, and determine the number of opcodes, contained
+#		   within its own code, based on the machine instructions.
+#	ALGORITHM: 
+#			$s1 = icount	
+#			$s2 = jcount	
+#			$s3 = rcount
+#			$t3 = endRead
+#			
+#			while ($t0 != $t3)
+#			{
+#				if($t0 == $t3)	exit;
+#	
+#				$t1 = $t2 >> 26
+#				if (t1==0) {rcount++;} 
+#				else if ($t1==2 || $t1==3) {icount++;}
+#				else {jcount++;}				
+#
+#				System.out.print(Icall + icount);			
+#				System.out.print(Jcall + jcount);
+#				System.out.print(Rcall + rcount);
+#			}
+#
+#				
+#	INPUTS:	The inputs of this program are the machine instructions of its own code.
+#
+#	OUTPUTS: The counts of I,J,and R type instructions.
+#
+#########################################################
+	
+		
+	.data
+icount:	.word	0
+jcount:	.word	0
+rcount:	.word	0
+i:	.word	0
+endRead: .word	604110858 	#intruction for the end of the loop
+Icall:	.asciiz	"The count for I types: "
+Jcall:	.asciiz "\nThe count for J types: "
+Rcall:	.asciiz "\nThe count for R types: "
+
+	.text
+main:				#
+	la	$s0, main	# This stores the address of the main into a saved register.
+	lw	$s1, icount	# Thes will assign the variables of the counts to the registers.
+	lw	$s2, jcount	#
+	lw	$s3, rcount	#
+	lw	$t3, endRead	# This will lod the converted value for the line: li $v0, 10
+				# This loop is where the program will read itself to determine opcodes.
+loop:				#
+				# while ($t0 != $t3)
+	lw	$t0, 0($s0)	#
+	beq	$t3, $t0, exit	# if($t0 == $t3)
+	srl	$t1, $t0, 26	# $t1 = $t2 >> 26
+	bnez	$t1, notR	# if (t1==0)
+	addi 	$s3, $s3, 1 	# 	rcount++
+	addi	$s0, $s0, 4	#
+	j	loop		#
+notR:				#
+	beq 	$t1, 2, isJ	# else if ($t1==2 || $t1==3)
+	beq	$t1, 3, isJ	#
+	addi	$s1, $s1, 1	# 	icount++
+	addi	$s0, $s0, 4	#
+	j	loop		#
+isJ:				# else
+	addi	$s2, $s2, 1	# 	jcount++	
+	addi	$s0, $s0, 4	#
+	j	loop		#
+exit:				#
+	addi 	$s3, $s3, 1	# rcount++ to account for syscall to terminate program		
+	li	$v0, 4		# Print the necessary information
+	la	$a0, Icall	# System.out.print(Icall + icount)
+	syscall			#
+	li	$v0, 1		#
+	move	$a0, $s1	#
+	syscall			#
+	li	$v0, 4		# System.out.print(Jcall + jcount)
+	la	$a0, Jcall	#
+	syscall			#
+	li	$v0, 1		#
+	move	$a0, $s2	#
+	syscall			#
+	li	$v0, 4		# System.out.print(Rcall + rcount)
+	la	$a0, Rcall	#
+	syscall			#
+	li	$v0, 1		#
+	move	$a0, $s3	#
+	syscall			#
+				#
+	li 	$v0, 10		# end program
+	syscall			#
